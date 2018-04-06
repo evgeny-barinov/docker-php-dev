@@ -1,0 +1,53 @@
+version: "3"
+services:
+  web:
+    container_name: ${CONTAINER_PREFIX}nginx
+    build: ../images/nginx/
+    ports:
+      - "80:80"
+    links:
+      - phpfpm
+    volumes:
+      - ~/dev/web:/usr/share/nginx/html
+      - ../hosts:/etc/nginx/conf.d
+      - ../images/nginx/conf/nginx.conf:/etc/nginx/nginx.conf
+      - ../images/nginx/conf/fastcgi_params:/etc/nginx/fastcgi_params
+      - ../logs/nginx:/var/log/nginx
+  phpfpm:
+    container_name: ${CONTAINER_PREFIX}phpfpm
+    build: "../images/${PHP_VERSION}/"
+    ports:
+      - "9000:9000"
+    links:
+      - mysql
+    volumes:
+      - ~/dev/web:/usr/share/nginx/html
+      - "../images/${PHP_VERSION}/php.ini:/usr/local/etc/php/php.ini"
+  mysql:
+    container_name: ${CONTAINER_PREFIX}mysql
+    build: ../images/mysql/
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+  phpmyadmin:
+    container_name: ${CONTAINER_PREFIX}phpmyadmin
+    image: phpmyadmin/phpmyadmin:latest
+    links:
+      - mysql:db
+    ports:
+      - "81:80"
+    environment:
+      PMA_USER: root
+      PMA_PASSWORD: root
+      PMA_ARBITRARY: 1
+      PMA_ABSOLUTE_URI: http://pma.local
+  redis:
+    container_name: ${CONTAINER_PREFIX}redis
+    build: ../images/redis/
+    ports:
+      - "6379:6379"
+    volumes:
+      - ../images/redis/redis.conf:/usr/local/etc/redis/redis.conf
